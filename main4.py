@@ -7,7 +7,7 @@ from PIL import Image
 import pandas as pd
 
 # Чтение текста из Excel-файла
-excel_file_path = '/Users/stanislavparmut/Documents/progs/cloud_of_words/content/obrazec.xlsx'
+excel_file_path = './content/obrazec.xlsx'
 df = pd.read_excel(excel_file_path)
 text_column_name = 'Text'  # Замените на имя столбца с текстом в вашем файле
 
@@ -55,7 +55,7 @@ wordcloud1 = generate_and_plot_wordcloud(3000, 2000, 'black', 'Pastel1')
 wordcloud1.to_file('hp_cloud_simple.png')
 
 # Генерируем и визуализируем облако слов с использованием маски
-mask_path = '/Users/stanislavparmut/Documents/progs/cloud_of_words/content/mgtu2.png'
+mask_path = './content/mgtu2.png'
 mask = np.array(Image.open(mask_path))
 wordcloud2 = generate_and_plot_wordcloud(3000, 2000, 'black', 'Set2', mask)
 wordcloud2.to_file('hp_upvote.png')
