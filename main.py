@@ -1,86 +1,59 @@
-# Импортируем нужные библиотеки
-import wikipedia
 import re
-
-# Выбираем язык Википедии и интересующую нас страницу
-wikipedia.set_lang("ru")
-wiki = wikipedia.page('Гарри Поттер')
-
-# Извлекаем текст из полученной страницы
-text = wiki.content
-
-# Очищаем текст с помощью регулярных выражений
-text = re.sub(r'==.*?==+', '', text)  # удаляем лишние символы
-text = text.replace('\n', '')  # удаляем знаки разделения на абзацы
-
-# ------
-# Импортируем библиотеку для визуализации
 import matplotlib.pyplot as plt
-%matplotlib inline
-
-
-# Функция для визуализации облака слов
-def plot_cloud(wordcloud):
-    # Устанавливаем размер картинки
-    plt.figure(figsize=(30, 20))
-    # Показать изображение
-    plt.imshow(wordcloud)
-    # Без подписей на осях
-    plt.axis("off")
-
-# -------
-    
-# Импортируем инструменты для облака слов и списки стоп-слов
 from wordcloud import WordCloud
 from stop_words import get_stop_words
-
-
-# Записываем в переменную стоп-слова русского языка
-STOPWORDS_RU = get_stop_words('russian')
-
-# Генерируем облако слов
-wordcloud = WordCloud(width = 2000,
-                      height = 1500,
-                      random_state=1,
-                      background_color='black',
-                      margin=20,
-                      colormap='Pastel1',
-                      collocations=False,
-                      stopwords = STOPWORDS_RU).generate(text)
-
-# Рисуем картинку
-plot_cloud(wordcloud)
-
-# ------
-
-# Сохраним получившуюся картинку в файл
-wordcloud.to_file('hp_cloud_simple.png')
-
-
-# -----
-
-# Импортируем необходимое
 import numpy as np
 from PIL import Image
+import pandas as pd
+
+# Чтение текста из Excel-файла
+excel_file_path = './content/obrazec.xlsx'
+df = pd.read_excel(excel_file_path)
+text_column_name = 'Text'  # Замените на имя столбца с текстом в вашем файле
+
+# Очистка текста
+df[text_column_name] = df[text_column_name].apply(
+    lambda x: re.sub(r'==.*?==+', '', str(x)).replace('\n', ''))
+
+# Создание списка русских матерных слов (пример)
+russian_profanity_list = ['хуй', 'пизда', 'бля', 'блять', 'епты', 'пиздец',
+                          'ахуеть', 'ебать', 'еба', 'сука', 'сучка', 'пидор', 'блядина', 'нахуй']
+
+# Фильтрация матерных слов из текста
+df[text_column_name] = df[text_column_name].apply(lambda x: ' '.join(
+    [word for word in str(x).split() if word.lower() not in russian_profanity_list]))
+
+# Объединяем текст в единый текст
+text = ' '.join(df[text_column_name].astype(str))
+
+# Продолжаем код для облака слов
+STOPWORDS_RU = get_stop_words('russian')
 
 
-# Превращаем картинку в маску
-mask = np.array(Image.open('/content/comment.png'))
+def generate_and_plot_wordcloud(width, height, background_color, colormap, mask=None):
+    wordcloud = WordCloud(width=width,
+                          height=height,
+                          random_state=1,
+                          background_color=background_color,
+                          margin=20,
+                          colormap=colormap,
+                          collocations=False,
+                          stopwords=STOPWORDS_RU,
+                          mask=mask).generate(text)
 
-# Генерируем облако слов
-wordcloud = WordCloud(width = 2000,
-                      height = 1500,
-                      random_state=1,
-                      background_color='white',
-                      colormap='Set2',
-                      collocations=False,
-                      stopwords = STOPWORDS_RU,
-                      mask=mask).generate(text)
+    plt.figure(figsize=(30, 20))
+    plt.imshow(wordcloud)
+    plt.axis("off")
 
-# Выводим его на экран
-plot_cloud(wordcloud)
+    return wordcloud
 
 
-# -------
+# Генерируем и визуализируем облако слов на черном фоне
+wordcloud1 = generate_and_plot_wordcloud(3000, 2000, 'black', 'Pastel1')
+wordcloud1.to_file('hp_cloud_simple.png')
 
-wordcloud.to_file('hp_upvote.png')
+# Генерируем и визуализируем облако слов с использованием маски
+mask_path = './content/mgtu2.png'
+mask = np.array(Image.open(mask_path))
+wordcloud2 = generate_and_plot_wordcloud(3000, 2000, 'black', 'Set2', mask)
+wordcloud2.to_file('hp_upvote.png')
